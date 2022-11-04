@@ -630,7 +630,6 @@ function RefreshTo-MSGraphToken {
     $Headers["User-Agent"] = $UserAgent
       
     $Resource = "https://graph.microsoft.com/"
-    $ClientId = "d3590ed6-52b3-4102-aeff-aad2292ab01c"
     $TenantId = Get-TenantID -domain $domain
     $authUrl = "https://login.microsoftonline.com/$($TenantId)"
     $global:refreshToken = $response.refresh_token 
@@ -688,7 +687,6 @@ function RefreshTo-GraphToken {
     $Headers=@{}
     $Headers["User-Agent"] = $UserAgent
     $Resource = "https://graph.windows.net/"
-    $ClientId = "d3590ed6-52b3-4102-aeff-aad2292ab01c"
     $TenantId = Get-TenantID -domain $domain
     $authUrl = "https://login.microsoftonline.com/$($TenantId)"
 
@@ -1042,4 +1040,62 @@ function Clear-Token {
     elseif ($Token -eq "Substrate") {
         $global:SubstrateToken = $null
     }
+}
+
+function RefreshTo-AzurePowershellToken {
+    <#
+    .DESCRIPTION
+        Generate a Microsoft Azure Mangement token from a refresh token.
+    .EXAMPLE
+        RefreshTo-AzureManagementToken -domain myclient.org -refreshToken ey....
+        $AzureManagementToken.access_token
+    #>
+    [cmdletbinding()]
+    Param(
+        [Parameter(Mandatory=$true)]
+        [string]$domain,
+        [Parameter(Mandatory=$false)]
+        [string]$refreshToken = $response.refresh_token,
+	[Parameter(Mandatory=$false)]
+    	[string]$ClientID = "1950a258-227b-4e31-a9cf-717495945fc2",
+        [Parameter(Mandatory=$False)]
+        [ValidateSet('Mac','Windows','AndroidMobile','iPhone')]
+        [String]$Device,
+        [Parameter(Mandatory=$False)]
+        [ValidateSet('Android','IE','Chrome','Firefox','Edge','Safari')]
+        [String]$Browser
+    )
+    if ($Device) {
+		if ($Browser) {
+			$UserAgent = Forge-UserAgent -Device $Device -Browser $Browser
+		}
+		else {
+			$UserAgent = Forge-UserAgent -Device $Device
+		}
+	}
+	else {
+	   if ($Browser) {
+			$UserAgent = Forge-UserAgent -Browser $Browser 
+	   } 
+	   else {
+			$UserAgent = Forge-UserAgent
+	   }
+	}    
+    $Headers=@{}
+    $Headers["User-Agent"] = $UserAgent
+    $Resource = "https://graph.microsoft.com"
+    $TenantId = Get-TenantID -domain $domain
+    $authUrl = "https://login.microsoftonline.com/$($TenantId)"
+    $global:refreshToken = $response.refresh_token 
+    Write-Output $refreshToken
+    $body = @{
+        "resource" =      $Resource
+        "client_id" =     $ClientId
+        "grant_type" =    "refresh_token"
+        "refresh_token" = $refreshToken
+        "scope"=         "openid"
+    }
+
+    $global:AzurePSToken = Invoke-RestMethod -UseBasicParsing -Method Post -Uri "$($authUrl)/oauth2/token?api-version=1.0" -Headers $Headers -Body $body
+    Write-Output $AzurePSToken
 }

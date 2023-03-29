@@ -1063,7 +1063,9 @@ function RefreshTo-AzurePowershellToken {
         [String]$Device,
         [Parameter(Mandatory=$False)]
         [ValidateSet('Android','IE','Chrome','Firefox','Edge','Safari')]
-        [String]$Browser
+        [String]$Browser,
+	[Parameter(Mandatory=$False)]
+	[String]$Resource = "https://graph.microsoft.com"
     )
     if ($Device) {
 		if ($Browser) {
@@ -1083,7 +1085,6 @@ function RefreshTo-AzurePowershellToken {
 	}    
     $Headers=@{}
     $Headers["User-Agent"] = $UserAgent
-    $Resource = "https://graph.microsoft.com"
     $TenantId = Get-TenantID -domain $domain
     $authUrl = "https://login.microsoftonline.com/$($TenantId)"
     $global:refreshToken = $response.refresh_token 
